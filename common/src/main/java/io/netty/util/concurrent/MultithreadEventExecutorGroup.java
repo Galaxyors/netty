@@ -15,8 +15,6 @@
  */
 package io.netty.util.concurrent;
 
-import static io.netty.util.internal.ObjectUtil.checkPositive;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -25,6 +23,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static io.netty.util.internal.ObjectUtil.checkPositive;
 
 /**
  * Abstract base class for {@link EventExecutorGroup} implementations that handles their tasks with multiple threads at
@@ -77,7 +77,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         }
 
         children = new EventExecutor[nThreads];
-
+        //初始化EventExecutor
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
@@ -87,11 +87,16 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                 // TODO: Think about if this is a good exception type
                 throw new IllegalStateException("failed to create a child event loop", e);
             } finally {
+                /*
+                 * 初始化EventExecutor失败，回滚之前的创建操作
+                 */
                 if (!success) {
+                    // 创建EventExecutor过程中失败，将之前已经创建成功的EventExecutor关闭
                     for (int j = 0; j < i; j ++) {
                         children[j].shutdownGracefully();
                     }
 
+                    // 等待关闭EventExecutor
                     for (int j = 0; j < i; j ++) {
                         EventExecutor e = children[j];
                         try {
@@ -113,6 +118,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
             @Override
             public void operationComplete(Future<Object> future) throws Exception {
+                // 当所有的EventExecutor的关闭完成后，触发EventLoopGroup的Listener
                 if (terminatedChildren.incrementAndGet() == children.length) {
                     terminationFuture.setSuccess(null);
                 }

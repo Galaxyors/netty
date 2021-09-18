@@ -200,26 +200,32 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
             checkMultiplicity(handler);
-
+            // 创建新的Context
             newCtx = newContext(group, filterName(name, handler), handler);
-
+            // head--tail之间的context维护双向链表
             addLast0(newCtx);
 
             // If the registered is false it means that the channel was not registered on an eventLoop yet.
             // In this case we add the context to the pipeline and add a task that will call
             // ChannelHandler.handlerAdded(...) once the channel is registered.
             if (!registered) {
+                // 判断已经添加，但是未执行
                 newCtx.setAddPending();
+                // 维护 pendingHandlerCallbackHead 链表
                 callHandlerCallbackLater(newCtx, true);
                 return this;
             }
 
+            /**
+             * 已经注册成功的，使用所属channel的绑定的eventExecutor
+             */
             EventExecutor executor = newCtx.executor();
             if (!executor.inEventLoop()) {
                 callHandlerAddedInEventLoop(newCtx, executor);
                 return this;
             }
         }
+        // 添加处理Handler，并执行handler
         callHandlerAdded0(newCtx);
         return this;
     }
@@ -277,6 +283,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         ctx.prev = newCtx;
     }
 
+    // 给每一个Handler命名
     private String filterName(String name, ChannelHandler handler) {
         if (name == null) {
             return generateName(handler);
@@ -1117,6 +1124,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
+    /**
+     * 未注册完成的，维护 pendingHandlerCallbackHead 的链表结构。
+     *
+     * @param ctx
+     * @param added
+     */
     private void callHandlerCallbackLater(AbstractChannelHandlerContext ctx, boolean added) {
         assert !registered;
 
@@ -1134,7 +1147,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private void callHandlerAddedInEventLoop(final AbstractChannelHandlerContext newCtx, EventExecutor executor) {
+        // 判断是否添加成功
         newCtx.setAddPending();
+        // 异步执行，添加处理Handler，并执行handler
         executor.execute(new Runnable() {
             @Override
             public void run() {

@@ -79,6 +79,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      * {@link EventLoopGroup}'s are used to handle all the events and IO for {@link ServerChannel} and
      * {@link Channel}'s.
      */
+    // 指定用于接收链接的BossGroup和用于处理IO时间的workGroup,两个group只能指定一次，不支持后续修改
     public ServerBootstrap group(EventLoopGroup parentGroup, EventLoopGroup childGroup) {
         super.group(parentGroup);
         if (this.childGroup != null) {
@@ -127,9 +128,16 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         return this;
     }
 
+    /**
+     * 初始化刚创建的Channel工作：
+     * 1.初始化
+     *
+     **/
     @Override
     void init(Channel channel) {
+        // 设置绑定的ChannelOption参数
         setChannelOptions(channel, newOptionsArray(), logger);
+        // 设置属性信息
         setAttributes(channel, newAttributesArray());
 
         ChannelPipeline p = channel.pipeline();
@@ -139,6 +147,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         final Entry<ChannelOption<?>, Object>[] currentChildOptions = newOptionsArray(childOptions);
         final Entry<AttributeKey<?>, Object>[] currentChildAttrs = newAttributesArray(childAttrs);
 
+        /**
+         * 1. 向ChannelPipe添加boss上的handler处理器
+         * 2.
+         */
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) {
@@ -147,12 +159,12 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }
-
+                // boss添加acceptor处理器，用于处理IO读写事件 到workerGroup
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {
-                        pipeline.addLast(new ServerBootstrapAcceptor(
-                                ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
+                    pipeline.addLast(new ServerBootstrapAcceptor(
+                            ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
                     }
                 });
             }

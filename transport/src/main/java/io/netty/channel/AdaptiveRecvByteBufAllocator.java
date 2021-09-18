@@ -36,6 +36,7 @@ public class AdaptiveRecvByteBufAllocator extends DefaultMaxMessagesRecvByteBufA
 
     static final int DEFAULT_MINIMUM = 64;
     // Use an initial value that is bigger than the common MTU of 1500
+    // 最大传输单元（Maximum Transmission Unit，MTU）
     static final int DEFAULT_INITIAL = 2048;
     static final int DEFAULT_MAXIMUM = 65536;
 

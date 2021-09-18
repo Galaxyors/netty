@@ -20,6 +20,9 @@ import io.netty.util.internal.ObjectUtil;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
+/**
+ * ThreadFactory 的封装类
+ **/
 public final class ThreadPerTaskExecutor implements Executor {
     private final ThreadFactory threadFactory;
 

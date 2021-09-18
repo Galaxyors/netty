@@ -133,7 +133,9 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
                 exceptionCaught(ctx, cause);
             } finally {
                 ChannelPipeline pipeline = ctx.pipeline();
+                // 判断是否在context中的双向链表
                 if (pipeline.context(this) != null) {
+
                     pipeline.remove(this);
                 }
             }

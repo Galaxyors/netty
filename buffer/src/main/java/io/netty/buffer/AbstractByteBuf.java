@@ -67,8 +67,9 @@ public abstract class AbstractByteBuf extends ByteBuf {
 
     static final ResourceLeakDetector<ByteBuf> leakDetector =
             ResourceLeakDetectorFactory.instance().newResourceLeakDetector(ByteBuf.class);
-
+    // 可读Buffer下表
     int readerIndex;
+    // 可写Buffer下标
     int writerIndex;
     private int markedReaderIndex;
     private int markedWriterIndex;
@@ -78,7 +79,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         checkPositiveOrZero(maxCapacity, "maxCapacity");
         this.maxCapacity = maxCapacity;
     }
-
+    // 是否是只读Buffer
     @Override
     public boolean isReadOnly() {
         return false;

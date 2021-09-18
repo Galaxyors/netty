@@ -30,6 +30,7 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
 
     private DefaultEventExecutorChooserFactory() { }
 
+    // 轮询方式的使用 EventExecutor
     @Override
     public EventExecutorChooser newChooser(EventExecutor[] executors) {
         if (isPowerOfTwo(executors.length)) {
@@ -39,6 +40,7 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
         }
     }
 
+    // 2的整数次幂
     private static boolean isPowerOfTwo(int val) {
         return (val & -val) == val;
     }
@@ -53,6 +55,7 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
 
         @Override
         public EventExecutor next() {
+            // 2的正数次幂的取余
             return executors[idx.getAndIncrement() & executors.length - 1];
         }
     }

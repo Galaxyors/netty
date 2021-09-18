@@ -106,6 +106,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * {@link Channel} implementation has no no-args constructor.
      */
     public B channel(Class<? extends C> channelClass) {
+        // 指定Channel类型，并返回ChannelFactory,后续根据工厂模式和反射技术，生产指定类型Channel对象
         return channelFactory(new ReflectiveChannelFactory<C>(
                 ObjectUtil.checkNotNull(channelClass, "channelClass")
         ));
@@ -307,9 +308,18 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
+            /**
+             * 根据之前ServerBootstrap.channel()的Channel类型，反射实例出实例对象
+             * 1 创建Channel实例
+             *  1.1 ChannelPipeline以及下面的ChannelHandlerContext双向链表
+             *  1.2 ChannelConfig的Buf分配器（优势：动态分配）
+             * 2.ServerSocket实例
+             */
             channel = channelFactory.newChannel();
+            //初始化Channel对象
             init(channel);
         } catch (Throwable t) {
+            // 创建或初始化Channel失败后，关闭操作
             if (channel != null) {
                 // channel can be null if newChannel crashed (eg SocketException("too many open files"))
                 channel.unsafe().closeForcibly();
@@ -319,8 +329,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             // as the Channel is not registered yet we need to force the usage of the GlobalEventExecutor
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
-
+        // 将channel注册到boss EventLoopGroup上去
         ChannelFuture regFuture = config().group().register(channel);
+        // 注册过程出现异常，关闭Channel
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
                 channel.close();
@@ -362,6 +373,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     /**
+     * 用于处理请求的ChannelHandler
      * the {@link ChannelHandler} to use for serving the requests.
      */
     public B handler(ChannelHandler handler) {

@@ -87,6 +87,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
         super(null, channel, SelectionKey.OP_ACCEPT);
+        // 初始化ChannelConfig和ByteBufAllocator
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }
 
